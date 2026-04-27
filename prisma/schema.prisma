@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id          String   @id @default(cuid())
+  name        String
+  url         String   @unique
+  sourceType  String
+  credibility Float    @default(3)
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rawItems RawItem[]
+}
+
+model RawItem {
+  id          String   @id @default(cuid())
+  externalId  String?
+  title       String
+  url         String   @unique
+  sourceName  String
+  sourceType  String
+  publishedAt DateTime
+  rawText     String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  sourceId String?
+  source   Source? @relation(fields: [sourceId], references: [id])
+}
+
+model CanonicalItem {
+  id                   String   @id @default(cuid())
+  title                String
+  url                  String   @unique
+  source               String
+  sourceType           String
+  publishedAt          DateTime
+  category             String
+  entitiesJson         String
+  summaryCandidateText String
+  supportingUrlsJson   String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  score    ItemScore?
+  seenItem SeenItem?
+}
+
+model ItemScore {
+  id                 String   @id @default(cuid())
+  canonicalItemId    String   @unique
+  engineeringImpact  Float
+  novelty            Float
+  careerRelevance    Float
+  credibility        Float
+  urgency            Float
+  hypeRisk           Float
+  finalScore         Float
+  createdAt          DateTime @default(now())
+
+  canonicalItem CanonicalItem @relation(fields: [canonicalItemId], references: [id])
+}
+
+model SeenItem {
+  id              String   @id @default(cuid())
+  canonicalItemId String   @unique
+  seenAt          DateTime @default(now())
+
+  canonicalItem CanonicalItem @relation(fields: [canonicalItemId], references: [id])
+}
+
+model UserPreference {
+  id             String   @id @default(cuid())
+  preferredJson  String
+  mutedJson      String
+  minScore       Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
