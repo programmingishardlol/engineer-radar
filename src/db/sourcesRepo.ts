@@ -27,13 +27,17 @@ export async function upsertSource(input: SourceInput): Promise<SourceRegistryIt
       id: input.id,
       name: input.name,
       url: input.url,
+      category: input.category,
       sourceType: input.sourceType,
+      fetchMethod: input.fetchMethod,
       credibility: input.credibility,
       enabled: input.enabled ?? true
     },
     update: {
       name: input.name,
+      category: input.category,
       sourceType: input.sourceType,
+      fetchMethod: input.fetchMethod,
       credibility: input.credibility,
       enabled: input.enabled ?? true
     }

@@ -4,7 +4,19 @@ import type {
   RawItem as DbRawItem,
   Source as DbSource
 } from "@prisma/client";
-import { categories, sourceTypes, type CanonicalItem, type Category, type RawItem, type RankedItem, type ScoreBreakdown, type SourceRegistryItem, type SourceType } from "../types";
+import {
+  categories,
+  fetchMethods,
+  sourceTypes,
+  type CanonicalItem,
+  type Category,
+  type FetchMethod,
+  type RawItem,
+  type RankedItem,
+  type ScoreBreakdown,
+  type SourceRegistryItem,
+  type SourceType
+} from "../types";
 
 function requireCategory(value: string): Category {
   if (categories.includes(value as Category)) {
@@ -20,6 +32,14 @@ function requireSourceType(value: string): SourceType {
   }
 
   throw new Error(`Unknown source type in database: ${value}`);
+}
+
+function requireFetchMethod(value: string): FetchMethod {
+  if (fetchMethods.includes(value as FetchMethod)) {
+    return value as FetchMethod;
+  }
+
+  throw new Error(`Unknown fetch method in database: ${value}`);
 }
 
 function parseStringArray(value: string): string[] {
@@ -40,7 +60,9 @@ export function mapDbSource(source: DbSource): SourceRegistryItem {
     id: source.id,
     name: source.name,
     url: source.url,
+    category: requireCategory(source.category),
     sourceType: requireSourceType(source.sourceType),
+    fetchMethod: requireFetchMethod(source.fetchMethod),
     credibility: source.credibility,
     enabled: source.enabled
   };

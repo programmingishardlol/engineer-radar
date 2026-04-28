@@ -11,7 +11,9 @@ model Source {
   id          String   @id @default(cuid())
   name        String
   url         String   @unique
+  category    String   @default("developer_tools")
   sourceType  String
+  fetchMethod String   @default("mock")
   credibility Float    @default(3)
   enabled     Boolean  @default(true)
   createdAt   DateTime @default(now())
