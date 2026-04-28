@@ -14,14 +14,14 @@ export const categories = [
 export type Category = (typeof categories)[number];
 
 export const categoryLabels: Record<Category, string> = {
-  ai_models: "AI Models",
-  developer_tools: "Developer Tools",
-  hardware: "Hardware",
-  startups: "Startups",
-  open_source: "Open Source",
+  ai_models: "AI Model Updates",
+  developer_tools: "AI Coding Tool Updates",
+  hardware: "Hardware and Computing",
+  startups: "Fast-Growing Startups",
+  open_source: "Open Source and Developer Infrastructure",
   security: "Security",
   cloud_infrastructure: "Cloud Infrastructure",
   research: "Research",
-  company_moves: "Company Moves",
-  career_skills: "Career Skills"
+  company_moves: "Big Tech Company Updates",
+  career_skills: "Engineering Career and Skill Signals"
 };
