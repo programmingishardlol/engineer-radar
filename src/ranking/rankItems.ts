@@ -9,6 +9,12 @@ export function rankItems(items: CanonicalItem[]): RankedItem[] {
         return second.score.finalScore - first.score.finalScore;
       }
 
-      return new Date(second.publishedAt).getTime() - new Date(first.publishedAt).getTime();
+      const publishedDelta = new Date(second.publishedAt).getTime() - new Date(first.publishedAt).getTime();
+
+      if (publishedDelta !== 0) {
+        return publishedDelta;
+      }
+
+      return first.id.localeCompare(second.id);
     });
 }
