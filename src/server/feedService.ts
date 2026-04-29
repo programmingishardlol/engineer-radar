@@ -1,7 +1,7 @@
 import { runMockIngestJob } from "./jobs/ingestJob";
 import type { Category, FeedQuery, FeedResponse } from "../types";
 import { categories } from "../types";
-import { countCanonicalItems, listSavedRankedItems } from "../db/itemsRepo";
+import { countCanonicalItems, countRankedItems, listSavedRankedItems } from "../db/itemsRepo";
 
 function parseLimit(limit?: number): number {
   if (!limit || !Number.isFinite(limit)) {
@@ -31,8 +31,12 @@ async function getPersistedFeedItems(query: FeedQuery, limit: number) {
       minScore: query.minScore ?? 0,
       limit
     });
+    const total = await countRankedItems({
+      category: query.category,
+      minScore: query.minScore ?? 0
+    });
 
-    return items.length > 0 ? items : null;
+    return items.length > 0 ? { items, total } : null;
   } catch {
     return null;
   }
@@ -45,8 +49,8 @@ export async function getFeed(query: FeedQuery = {}): Promise<FeedResponse> {
 
   if (persistedItems) {
     return {
-      items: persistedItems,
-      total: persistedItems.length,
+      items: persistedItems.items,
+      total: persistedItems.total,
       generatedAt: new Date().toISOString()
     };
   }

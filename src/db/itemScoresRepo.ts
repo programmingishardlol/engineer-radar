@@ -47,11 +47,31 @@ function scoreData(input: ItemScoreInput) {
   };
 }
 
+function rankedWhere(options: RankedItemListOptions = {}) {
+  return {
+    ...(options.category ? { category: options.category } : {}),
+    score: {
+      is: {
+        finalScore: {
+          gte: options.minScore ?? 0
+        }
+      }
+    }
+  };
+}
+
 async function findRankedRows(options: RankedItemListOptions = {}) {
   return prisma.canonicalItem.findMany({
-    where: options.category ? { category: options.category } : undefined,
+    where: rankedWhere(options),
     include: { score: true },
-    take: parseLimit(options.limit) * 2
+    orderBy: [{ score: { finalScore: "desc" } }, { publishedAt: "desc" }],
+    take: parseLimit(options.limit)
+  });
+}
+
+export async function countRankedItems(options: Omit<RankedItemListOptions, "limit"> = {}): Promise<number> {
+  return prisma.canonicalItem.count({
+    where: rankedWhere(options)
   });
 }
 
@@ -126,14 +146,8 @@ export async function saveRankedItemScores(items: RankedItem[]): Promise<{ saved
 }
 
 export async function listRankedItems(options: RankedItemListOptions = {}): Promise<RankedItem[]> {
-  const minScore = options.minScore ?? 0;
   const rows = await findRankedRows(options);
   const rankedRows = rows.filter((row): row is DbRankedRow => row.score !== null);
 
-  return rankedRows
-    .map(mapDbRankedItem)
-    .filter((item) => !options.category || item.category === options.category)
-    .filter((item) => item.score.finalScore >= minScore)
-    .sort((left, right) => right.score.finalScore - left.score.finalScore)
-    .slice(0, parseLimit(options.limit));
+  return rankedRows.map(mapDbRankedItem);
 }
