@@ -46,6 +46,10 @@ const feedResponse: FeedResponse = {
   generatedAt: "2026-04-27T12:01:00.000Z"
 };
 
+function makeRequest(query = ""): NextRequest {
+  return new NextRequest(`http://localhost/api/feed${query}`);
+}
+
 describe("GET /api/feed route", () => {
   beforeEach(() => {
     getFeedMock.mockReset();
@@ -53,11 +57,7 @@ describe("GET /api/feed route", () => {
   });
 
   it("returns FeedResponse JSON and parses supported query params", async () => {
-    const request = new NextRequest(
-      "http://localhost/api/feed?category=developer_tools&minScore=3.2&limit=7"
-    );
-
-    const response = await GET(request);
+    const response = await GET(makeRequest("?category=developer_tools&minScore=3.2&limit=7"));
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -70,13 +70,27 @@ describe("GET /api/feed route", () => {
     expect(json).toEqual(feedResponse);
   });
 
+  it("ignores unknown categories instead of passing invalid category values to getFeed", async () => {
+    const response = await GET(makeRequest("?category=semiconductors&limit=3"));
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(getFeedMock).toHaveBeenCalledWith({
+      category: undefined,
+      minScore: undefined,
+      limit: 3
+    });
+    expect(json).toEqual(feedResponse);
+  });
+
   it("returns the documented error envelope when feed construction fails", async () => {
     getFeedMock.mockRejectedValue(new Error("feed unavailable"));
 
-    const response = await GET(new NextRequest("http://localhost/api/feed"));
+    const response = await GET(makeRequest());
     const json = await response.json();
 
     expect(response.status).toBe(500);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(json).toEqual({
       error: {
         code: "internal_error",
