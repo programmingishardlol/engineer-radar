@@ -9,15 +9,32 @@ export async function GET(request: NextRequest) {
   const minScoreParam = searchParams.get("minScore");
   const limitParam = searchParams.get("limit");
 
-  const feed = await getFeed({
-    category: isCategory(categoryParam) ? categoryParam : undefined,
-    minScore: minScoreParam ? Number(minScoreParam) : undefined,
-    limit: limitParam ? Number(limitParam) : undefined
-  });
+  try {
+    const feed = await getFeed({
+      category: isCategory(categoryParam) ? categoryParam : undefined,
+      minScore: minScoreParam ? Number(minScoreParam) : undefined,
+      limit: limitParam ? Number(limitParam) : undefined
+    });
 
-  return NextResponse.json(feed, {
-    headers: {
-      "Cache-Control": "no-store"
-    }
-  });
+    return NextResponse.json(feed, {
+      headers: {
+        "Cache-Control": "no-store"
+      }
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        error: {
+          code: "internal_error",
+          message: "Unable to build the feed."
+        }
+      },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store"
+        }
+      }
+    );
+  }
 }
