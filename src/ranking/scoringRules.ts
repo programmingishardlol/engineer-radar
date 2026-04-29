@@ -79,11 +79,16 @@ const urgencyKeywords = [
   "advisory",
   "available now",
   "breaking",
+  "breach",
+  "cve",
   "deprecated",
+  "incident",
+  "infrastructure",
   "exploit",
   "hiring",
   "launch",
   "layoff",
+  "outage",
   "now",
   "patch",
   "pricing",
@@ -98,10 +103,15 @@ const hypeKeywords = [
   "autonomous",
   "breakthrough",
   "disrupt",
+  "explosive",
   "game changer",
   "magic",
   "replaces engineers",
-  "revolutionary"
+  "revolutionary",
+  "ultimate",
+  "unprecedented",
+  "world first",
+  "10x"
 ];
 
 const technicalDetailKeywords = [
