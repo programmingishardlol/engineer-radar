@@ -64,6 +64,11 @@ model ItemScore {
   urgency            Float
   hypeRisk           Float
   finalScore         Float
+  summary            String   @default("")
+  whyEngineersCare   String   @default("")
+  whoShouldCare      String   @default("")
+  suggestedAction    String   @default("")
+  confidence         Float    @default(0)
   createdAt          DateTime @default(now())
 
   canonicalItem CanonicalItem @relation(fields: [canonicalItemId], references: [id])
