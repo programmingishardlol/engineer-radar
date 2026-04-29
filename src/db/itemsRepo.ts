@@ -4,7 +4,7 @@ import { listRankedItems, saveRankedItemScores } from "./itemScoresRepo";
 
 export { countCanonicalItems, getCanonicalItemByUrl, listCanonicalItems, saveCanonicalItems } from "./canonicalItemsRepo";
 export { countRawItems, getRawItemByUrl, listRawItems, saveRawItems } from "./rawItemsRepo";
-export { listRankedItems, saveItemScore, saveItemScores, saveRankedItemScores } from "./itemScoresRepo";
+export { countRankedItems, listRankedItems, saveItemScore, saveItemScores, saveRankedItemScores } from "./itemScoresRepo";
 export { countSeenItems, isItemSeen, listSeenItems, markItemSeen } from "./seenItemsRepo";
 
 export async function saveRankedItems(items: RankedItem[]): Promise<{ saved: number }> {
