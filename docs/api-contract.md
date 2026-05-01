@@ -53,9 +53,25 @@ type FeedResponse = {
 - `suggestedAction`
 - `confidence`
 
+## POST `/api/refresh`
+
+Triggers RSS/Atom ingestion, persists ranked items when SQLite is configured, and returns the refreshed feed.
+
+### Refresh Response
+
+```ts
+type RefreshResponse = {
+  fetched: number;
+  saved: number;
+  usedFallback: boolean;
+  sourceCount: number;
+  feed: FeedResponse;
+};
+```
+
 ### Current Mode
 
-The MVP endpoint uses mock/demo data only. It must not imply live source fetching.
+The MVP fetches a small registry of free RSS/Atom feeds. If every feed fails or returns no entries, ingestion falls back to mock/demo data.
 
 ### Error Contract
 

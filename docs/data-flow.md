@@ -55,12 +55,15 @@ The MVP feed has four stable handoff stages. Each stage owns its own logic, but 
 
 ## Runtime Path
 
-`collectMockRawItems -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> getFeed -> GET /api/feed -> Dashboard`
+`collectRssItems(defaultRssSources) -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> save to SQLite -> GET /api/feed -> Dashboard`
+
+If RSS/Atom collection returns no items, the runtime path falls back to:
+
+`collectMockRawItems -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> optional save to SQLite -> GET /api/feed -> Dashboard`
 
 ## Future Persistent Flow
 
-1. Save raw items in a raw-ingest store.
-2. Save normalized canonical records after pipeline processing.
-3. Save ranked outputs or score snapshots if persistence is needed.
-4. Track displayed or read items separately from the feed contract.
-5. Apply user preferences in the feed service without changing shared item shapes.
+1. Add source health and per-source last-fetched timestamps.
+2. Track displayed or read items separately from the feed contract.
+3. Apply user preferences in the feed service without changing shared item shapes.
+4. Add non-RSS collectors only after the RSS vertical slice remains stable.

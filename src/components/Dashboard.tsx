@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { CategoryFilter } from "./CategoryFilter";
 import { FeedCard } from "./FeedCard";
 import { SourceList } from "./SourceList";
-import { categoryLabels, type Category, type FeedResponse, type RankedItem } from "../types";
+import { categoryLabels, type Category, type FeedResponse, type RankedItem, type RefreshResponse } from "../types";
 
 export function Dashboard() {
   const [feed, setFeed] = useState<FeedResponse | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | "all">("all");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
 
   const sources = useMemo(() => {
     const uniqueSources = new Set(feed?.items.map((item) => item.source) ?? []);
@@ -38,11 +39,51 @@ export function Dashboard() {
       }
 
       setFeed((await response.json()) as FeedResponse);
+      setRefreshStatus(null);
     } catch {
       setError(
         hasExistingFeed
-          ? "Refresh failed. The last loaded mock feed is still shown."
-          : "Could not load the mock feed."
+          ? "Feed reload failed. The last loaded feed is still shown."
+          : "Could not load the feed."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function refreshFeed() {
+    const hasExistingFeed = feed !== null;
+    setIsLoading(true);
+    setError(null);
+    setRefreshStatus(null);
+
+    try {
+      const params = new URLSearchParams({ limit: "24" });
+      if (selectedCategory !== "all") {
+        params.set("category", selectedCategory);
+      }
+
+      const response = await fetch(`/api/refresh?${params.toString()}`, {
+        method: "POST",
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error("Refresh request failed");
+      }
+
+      const refresh = (await response.json()) as RefreshResponse;
+      setFeed(refresh.feed);
+      setRefreshStatus(
+        refresh.usedFallback
+          ? `RSS fetch returned no items; showing ${refresh.fetched} mock fallback updates.`
+          : `Fetched ${refresh.fetched} RSS/Atom updates from ${refresh.sourceCount} sources; saved ${refresh.saved}.`
+      );
+    } catch {
+      setError(
+        hasExistingFeed
+          ? "Refresh failed. The last loaded feed is still shown."
+          : "Could not refresh the feed."
       );
     } finally {
       setIsLoading(false);
@@ -80,7 +121,7 @@ export function Dashboard() {
             <div className="max-w-3xl">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase text-amber-800">
-                  Mock/demo data
+                  RSS + fallback
                 </span>
                 <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
                   API: /api/feed
@@ -88,14 +129,14 @@ export function Dashboard() {
               </div>
               <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">Engineering Radar</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                A ranked MVP dashboard for engineering updates. This view uses mock data only until live collectors are
-                integrated.
+                A ranked MVP dashboard for engineering updates from free RSS/Atom sources, with mock data retained as a
+                fallback when live feeds are unavailable.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() => void loadFeed()}
+              onClick={() => void refreshFeed()}
               disabled={isLoading}
               className="inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
@@ -143,8 +184,14 @@ export function Dashboard() {
           </div>
         ) : null}
 
+        {refreshStatus ? (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-900">
+            {refreshStatus}
+          </div>
+        ) : null}
+
         {isInitialLoading ? (
-          <section className="grid gap-4 lg:grid-cols-2" aria-label="Loading mock engineering updates">
+          <section className="grid gap-4 lg:grid-cols-2" aria-label="Loading engineering updates">
             {Array.from({ length: 4 }).map((_, index) => (
               <LoadingCard key={index} />
             ))}
@@ -157,10 +204,10 @@ export function Dashboard() {
           </section>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-300 bg-white px-5 py-10 text-center shadow-sm">
-            <p className="text-base font-semibold text-slate-950">No mock updates found for {activeCategoryLabel}.</p>
+            <p className="text-base font-semibold text-slate-950">No updates found for {activeCategoryLabel}.</p>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
-              The feed endpoint returned an empty result for this filter. Clear the category filter to see the full demo
-              feed.
+              The feed endpoint returned an empty result for this filter. Clear the category filter or refresh live
+              sources to try again.
             </p>
             {selectedCategory !== "all" ? (
               <button

@@ -1,9 +1,13 @@
 import type { Collector } from "./types";
-import type { RawItem } from "../types";
+import type { Category, RawItem, SourceType } from "../types";
 
 type RssParserOptions = {
   feedUrl: string;
   sourceName: string;
+  sourceType?: SourceType;
+  category?: Category;
+  credibility?: number;
+  maxItems?: number;
   now?: () => Date;
 };
 
@@ -109,8 +113,9 @@ function parseEntries(xml: string): ParsedEntry[] {
 
 export function parseRssXmlToRawItems(xml: string, options: RssParserOptions): RawItem[] {
   const now = options.now ?? (() => new Date());
+  const maxItems = options.maxItems ?? 20;
 
-  return parseEntries(xml).flatMap(({ entryXml, index, format }): RawItem[] => {
+  return parseEntries(xml).slice(0, maxItems).flatMap(({ entryXml, index, format }): RawItem[] => {
     const title = readTag(entryXml, "title");
     const url = readEntryUrl(entryXml, format);
 
@@ -128,12 +133,14 @@ export function parseRssXmlToRawItems(xml: string, options: RssParserOptions): R
         title,
         url,
         source: options.sourceName,
-        sourceType: "rss",
+        sourceType: options.sourceType ?? "rss",
         publishedAt,
         ...(rawText ? { rawText } : {}),
         metadata: {
           feedUrl: options.feedUrl,
-          feedFormat: format
+          feedFormat: format,
+          ...(options.category ? { category: options.category } : {}),
+          ...(options.credibility ? { sourceCredibility: options.credibility } : {})
         }
       }
     ];
@@ -156,6 +163,10 @@ export const collectRssItems: Collector = async (context) => {
     return parseRssXmlToRawItems(xml, {
       feedUrl: context.source.url,
       sourceName: context.source.name,
+      sourceType: context.source.sourceType,
+      category: context.source.category,
+      credibility: context.source.credibility,
+      maxItems: 20,
       now: context.now
     });
   } catch {
