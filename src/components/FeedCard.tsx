@@ -15,6 +15,7 @@ export function FeedCard({ item }: FeedCardProps) {
   }).format(new Date(item.publishedAt));
   const confidencePercent = Math.round(item.confidence * 100);
   const isHighImpact = item.score.finalScore >= 4;
+  const isMock = item.sourceType === "mock";
 
   return (
     <article
@@ -26,8 +27,15 @@ export function FeedCard({ item }: FeedCardProps) {
       ].join(" ")}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-          Mock/demo
+        <span
+          className={[
+            "rounded-full border px-2.5 py-1 text-xs font-semibold",
+            isMock
+              ? "border-amber-300 bg-amber-50 text-amber-800"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          ].join(" ")}
+        >
+          {isMock ? "Mock/demo" : "RSS/Atom"}
         </span>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
           {categoryLabels[item.category]}

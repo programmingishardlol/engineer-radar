@@ -12,3 +12,11 @@ export type FeedResponse = {
   total: number;
   generatedAt: string;
 };
+
+export type RefreshResponse = {
+  fetched: number;
+  saved: number;
+  usedFallback: boolean;
+  sourceCount: number;
+  feed: FeedResponse;
+};
