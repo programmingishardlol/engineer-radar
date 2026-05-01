@@ -56,12 +56,18 @@ describe("collectors", () => {
     expect(collectorResults).toEqual([[], [], [], [], []]);
   });
 
-  it("defines a small enabled registry of free RSS and Atom sources", () => {
-    expect(defaultRssSources.length).toBeGreaterThanOrEqual(5);
-    expect(defaultRssSources.length).toBeLessThanOrEqual(8);
+  it("defines a curated enabled registry of free RSS and Atom sources", () => {
+    expect(defaultRssSources.length).toBeGreaterThanOrEqual(10);
+    expect(defaultRssSources.length).toBeLessThanOrEqual(20);
     expect(defaultRssSources.every((source) => source.enabled)).toBe(true);
     expect(defaultRssSources.every((source) => source.fetchMethod === "rss")).toBe(true);
+    expect(defaultRssSources.every((source) => typeof source.priority === "number")).toBe(true);
+    expect(defaultRssSources.every((source) => Array.isArray(source.includeKeywords))).toBe(true);
+    expect(defaultRssSources.every((source) => Array.isArray(source.excludeKeywords))).toBe(true);
     expect(new Set(defaultRssSources.map((source) => source.url)).size).toBe(defaultRssSources.length);
+    expect(new Set(defaultRssSources.map((source) => source.category))).toEqual(
+      new Set(["ai_models", "developer_tools", "hardware", "security", "cloud_infrastructure", "open_source", "research"])
+    );
   });
 
   it("fetches RSS XML and converts feed entries into RawItem objects with source metadata", async () => {
@@ -107,5 +113,45 @@ describe("collectors", () => {
     expect(rawItems).toHaveLength(20);
     expect(rawItems[0].title).toBe("Example update 0");
     expect(rawItems[19].title).toBe("Example update 19");
+  });
+
+  it("filters low-signal RSS entries before they enter the pipeline", async () => {
+    const feedXml = `<?xml version="1.0"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>Join our customer webinar for partner sales teams</title>
+          <link>https://example.com/customer-webinar</link>
+          <description>A generic event with customer story and sales partner content.</description>
+        </item>
+        <item>
+          <title>Agent debugger adds deterministic test replay</title>
+          <link>https://example.com/agent-debugger-test-replay</link>
+          <description>The release adds trace capture, replay, and code review workflows for developers.</description>
+        </item>
+        <item>
+          <title>We are hiring field marketing managers</title>
+          <link>https://example.com/hiring-marketing</link>
+          <description>Hiring announcement for marketing roles.</description>
+        </item>
+      </channel>
+    </rss>`;
+
+    const rawItems = await collectRssItems({
+      source: {
+        ...rssSource,
+        includeKeywords: ["debugger", "test", "developer"],
+        excludeKeywords: ["field marketing"]
+      },
+      fetch: async () => new Response(feedXml, { status: 200 }),
+      now: () => new Date("2026-04-29T00:00:00.000Z")
+    });
+
+    expect(rawItems).toHaveLength(1);
+    expect(rawItems[0].title).toBe("Agent debugger adds deterministic test replay");
+    expect(rawItems[0].metadata).toMatchObject({
+      qualityFilter: "included",
+      sourcePriority: expect.any(Number)
+    });
   });
 });

@@ -25,4 +25,7 @@ export type SourceRegistryItem = {
   fetchMethod: FetchMethod;
   credibility: number;
   enabled: boolean;
+  priority?: number;
+  includeKeywords?: string[];
+  excludeKeywords?: string[];
 };
