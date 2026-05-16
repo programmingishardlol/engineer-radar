@@ -36,7 +36,7 @@ async function getPersistedFeedItems(query: FeedQuery, limit: number) {
       minScore: query.minScore ?? 0
     });
 
-    return items.length > 0 ? { items, total } : null;
+    return { items, total };
   } catch {
     return null;
   }
