@@ -21,7 +21,8 @@ const { POST } = await import("../src/app/api/refresh/route");
 const feedResponse: FeedResponse = {
   items: [],
   total: 0,
-  generatedAt: "2026-04-29T12:00:00.000Z"
+  generatedAt: "2026-04-29T12:00:00.000Z",
+  dataSource: "database"
 };
 
 const rankedItem: RankedItem = {
@@ -124,7 +125,8 @@ describe("POST /api/refresh route", () => {
       feed: {
         items: [rankedItem],
         total: 1,
-        generatedAt: expect.any(String)
+        generatedAt: expect.any(String),
+        dataSource: "transient"
       }
     });
   });

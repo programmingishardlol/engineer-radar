@@ -112,6 +112,22 @@ export function Dashboard() {
   const isInitialLoading = isLoading && !hasInitialLoad;
   const activeCategoryLabel = selectedCategory === "all" ? "All categories" : categoryLabels[selectedCategory];
   const generatedAt = feed?.generatedAt ? new Date(feed.generatedAt) : null;
+  const dataSourceLabel =
+    feed?.dataSource === "database"
+      ? "Live saved feed"
+      : feed?.dataSource === "mock"
+        ? "Mock demo mode"
+        : feed?.dataSource === "transient"
+          ? "Live unsaved refresh"
+          : "Loading feed";
+  const dataSourceDescription =
+    feed?.dataSource === "database"
+      ? "Reading persisted RSS/Atom updates from SQLite."
+      : feed?.dataSource === "mock"
+        ? "Showing clearly marked fixture updates because no saved live items are available or mock mode was requested."
+        : feed?.dataSource === "transient"
+          ? "Showing freshly fetched items that were not saved to SQLite."
+          : "Loading the public feed API.";
 
   return (
     <main className="min-h-screen bg-[#f6f7f9] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -121,7 +137,7 @@ export function Dashboard() {
             <div className="max-w-3xl">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase text-amber-800">
-                  RSS + fallback
+                  {dataSourceLabel}
                 </span>
                 <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
                   API: /api/feed
@@ -129,8 +145,7 @@ export function Dashboard() {
               </div>
               <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">Engineering Radar</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                A ranked MVP dashboard for engineering updates from free RSS/Atom sources, with mock data retained as a
-                fallback when live feeds are unavailable.
+                A ranked MVP dashboard for engineering updates from free RSS/Atom sources. {dataSourceDescription}
               </p>
             </div>
 
@@ -162,9 +177,15 @@ export function Dashboard() {
               onChange={handleCategoryChange}
               resultCount={items.length}
               isLoading={isLoading}
+              dataSource={feed?.dataSource}
             />
           </div>
-          <SourceList sources={sources} generatedAt={feed?.generatedAt} itemCount={items.length} />
+          <SourceList
+            sources={sources}
+            generatedAt={feed?.generatedAt}
+            itemCount={items.length}
+            dataSource={feed?.dataSource}
+          />
         </section>
 
         {error ? (

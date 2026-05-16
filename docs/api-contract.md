@@ -9,6 +9,7 @@ Returns the ranked engineering update feed consumed by the dashboard.
 - `category`: optional `Category`
 - `minScore`: optional number from `0` to `5`
 - `limit`: optional integer, clamped by the server
+- `mode`: optional `"mock"` to explicitly request demo fixture data. Default behavior is database-first auto mode.
 
 ### Type Source
 
@@ -21,6 +22,8 @@ type FeedResponse = {
   items: RankedItem[];
   total: number;
   generatedAt: string;
+  dataSource: "database" | "mock" | "transient";
+  fallbackReason?: "database_empty" | "database_unavailable" | "explicit_mock_mode";
 };
 ```
 
@@ -29,6 +32,8 @@ type FeedResponse = {
 - `items` is already ordered for presentation.
 - `total` is the number of matched items before the final slice in `items`.
 - `generatedAt` is an ISO-8601 timestamp.
+- `dataSource` tells the dashboard whether the response came from persisted SQLite rows, mock fixtures, or freshly fetched unsaved items.
+- `fallbackReason` is present only when mock fixtures are used.
 - `entities` is a string array in the current shared contract.
 - `whoShouldCare` is a single user-facing string in the current shared contract.
 - `confidence` is a number from `0` to `1`.
@@ -71,7 +76,7 @@ type RefreshResponse = {
 
 ### Current Mode
 
-The MVP fetches a small registry of free RSS/Atom feeds. If every feed fails or returns no entries, ingestion falls back to mock/demo data.
+The MVP fetches a small registry of free RSS/Atom feeds. Refresh persists non-mock RSS/Atom items to SQLite and reloads the feed from `GET /api/feed`. If every feed fails or returns no entries, ingestion does not save mock/demo data; the returned feed falls back through the normal database-first feed service.
 
 ### Error Contract
 

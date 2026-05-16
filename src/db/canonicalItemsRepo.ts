@@ -4,6 +4,7 @@ import { mapDbCanonicalItem, stringifyStringArray } from "./mappers";
 
 export type CanonicalItemListOptions = {
   category?: Category;
+  includeMock?: boolean;
   limit?: number;
 };
 
@@ -15,8 +16,10 @@ function parseLimit(limit?: number): number {
   return Math.max(1, Math.min(500, Math.floor(limit)));
 }
 
-export async function countCanonicalItems(): Promise<number> {
-  return prisma.canonicalItem.count();
+export async function countCanonicalItems(options: Pick<CanonicalItemListOptions, "includeMock"> = {}): Promise<number> {
+  return prisma.canonicalItem.count({
+    where: options.includeMock ? undefined : { sourceType: { not: "mock" } }
+  });
 }
 
 export async function getCanonicalItemByUrl(url: string): Promise<CanonicalItem | null> {
@@ -26,7 +29,10 @@ export async function getCanonicalItemByUrl(url: string): Promise<CanonicalItem 
 
 export async function listCanonicalItems(options: CanonicalItemListOptions = {}): Promise<CanonicalItem[]> {
   const items = await prisma.canonicalItem.findMany({
-    where: options.category ? { category: options.category } : undefined,
+    where: {
+      ...(options.category ? { category: options.category } : {}),
+      ...(options.includeMock ? {} : { sourceType: { not: "mock" } })
+    },
     orderBy: { publishedAt: "desc" },
     take: parseLimit(options.limit)
   });

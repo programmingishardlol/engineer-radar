@@ -8,12 +8,14 @@ export async function GET(request: NextRequest) {
   const categoryParam = searchParams.get("category") ?? undefined;
   const minScoreParam = searchParams.get("minScore");
   const limitParam = searchParams.get("limit");
+  const modeParam = searchParams.get("mode");
 
   try {
     const feed = await getFeed({
       category: isCategory(categoryParam) ? categoryParam : undefined,
       minScore: minScoreParam ? Number(minScoreParam) : undefined,
-      limit: limitParam ? Number(limitParam) : undefined
+      limit: limitParam ? Number(limitParam) : undefined,
+      mode: modeParam === "mock" ? "mock" : "auto"
     });
 
     return NextResponse.json(feed, {

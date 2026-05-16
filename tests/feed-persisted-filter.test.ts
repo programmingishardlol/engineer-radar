@@ -38,8 +38,10 @@ describe("getFeed persisted category filters", () => {
 
     expect(feed.items).toEqual([]);
     expect(feed.total).toBe(0);
+    expect(feed.dataSource).toBe("database");
     expect(listSavedRankedItemsMock).toHaveBeenCalledWith({
       category: "hardware",
+      includeMock: false,
       minScore: 0,
       limit: 24
     });

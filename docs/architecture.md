@@ -1,6 +1,6 @@
 # Architecture
 
-Engineering Radar uses a mock-first vertical slice with strict shared contracts so parallel agents can move without inventing duplicate schemas.
+Engineering Radar uses a database-first feed with a mock fixture fallback and strict shared contracts so parallel agents can move without inventing duplicate schemas.
 
 ## Source Of Truth
 
@@ -64,4 +64,6 @@ Engineering Radar uses a mock-first vertical slice with strict shared contracts 
 
 ## Vertical Slice
 
-`mockCollector -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> getFeed -> GET /api/feed -> dashboard`
+`RSS collectors -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> persist SQLite rows -> getFeed -> GET /api/feed -> dashboard`
+
+Mock fixtures remain available through explicit mock mode and as the empty-database fallback. They should not be saved as if they were live news.

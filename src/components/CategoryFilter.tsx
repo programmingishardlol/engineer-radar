@@ -1,20 +1,25 @@
-import { categories, categoryLabels, type Category } from "../types";
+import { categories, categoryLabels, type Category, type FeedDataSource } from "../types";
 
 type CategoryFilterProps = {
   selectedCategory: Category | "all";
   onChange: (category: Category | "all") => void;
   resultCount: number;
   isLoading: boolean;
+  dataSource?: FeedDataSource;
 };
 
-export function CategoryFilter({ selectedCategory, onChange, resultCount, isLoading }: CategoryFilterProps) {
+export function CategoryFilter({ selectedCategory, onChange, resultCount, isLoading, dataSource }: CategoryFilterProps) {
+  const sourceLabel = dataSource === "mock" ? "mock/demo" : dataSource === "database" ? "saved" : "live";
+
   return (
     <div>
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-950">Category filter</h2>
           <p className="mt-1 text-xs text-slate-500">
-            {isLoading ? "Loading mock results..." : `${resultCount} mock result${resultCount === 1 ? "" : "s"} shown`}
+            {isLoading
+              ? "Loading results..."
+              : `${resultCount} ${sourceLabel} result${resultCount === 1 ? "" : "s"} shown`}
           </p>
         </div>
         {selectedCategory !== "all" ? (

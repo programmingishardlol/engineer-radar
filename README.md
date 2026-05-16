@@ -2,7 +2,7 @@
 
 Engineering Radar is a high-signal tech update dashboard for engineers. It is designed to collect engineering-relevant updates from AI model releases, developer tools, hardware/chips, startups, open-source projects, security advisories, cloud infrastructure, research papers, Hacker News, GitHub, RSS feeds, arXiv, and company blogs.
 
-The MVP is mock-first. It proves the contracts, pipeline, ranking, API, and dashboard before real ingestion.
+The MVP is now database-first with mock fixtures retained as a clearly labeled fallback. It proves the contracts, RSS ingestion, pipeline, ranking, persistence, API, and dashboard without paid APIs.
 
 ## Tech Stack
 
@@ -19,17 +19,18 @@ The MVP is mock-first. It proves the contracts, pipeline, ranking, API, and dash
 Current vertical slice:
 
 ```txt
-mock raw items
+RSS/Atom raw items
 -> normalize to canonical items
 -> deduplicate exact URLs
 -> rank deterministically
+-> persist to SQLite
 -> GET /api/feed
--> dashboard fetches and renders feed
+-> dashboard fetches and renders saved feed
 ```
 
-The feed service can read persisted ranked items when `DATABASE_URL` is configured and the database has saved canonical items. Otherwise it falls back to the mock ingest pipeline so the MVP works without a database migration.
+The feed service reads persisted ranked items from SQLite first. Mock/demo data is used only when the database has no saved non-mock items or when `GET /api/feed?mode=mock` is explicitly requested.
 
-Real external collectors are typed stubs. They intentionally return empty arrays until safe, free source ingestion is wired in a later iteration.
+RSS ingestion is wired for safe, free source fetching. Other external collectors are typed stubs until their source-specific implementations are added.
 
 ## Setup
 
@@ -43,7 +44,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The dashboard calls `/api/feed`; `/api/refresh` currently aliases the same mock feed endpoint.
+The dashboard calls `/api/feed`. The refresh button calls `POST /api/refresh`, which fetches RSS/Atom sources, saves non-mock items to SQLite, then reloads the feed from the database.
 
 ## Scripts
 
@@ -66,6 +67,7 @@ Optional query params:
 - `category`
 - `minScore`
 - `limit`
+- `mode=mock` for explicit demo fixtures
 
 Example:
 
@@ -158,5 +160,5 @@ Run `npm test` after major merges and `npm run build` before final integration.
 
 - `npm audit` may report dependency vulnerabilities from the current framework/tooling tree. Do not run `npm audit fix --force` casually because it may introduce breaking upgrades.
 - In the Codex sandbox, `npm run build` may fail when Turbopack tries to spawn/bind an internal process. The same build passed outside the sandbox.
-- External collectors are compile-safe stubs, not real ingestion.
-- No Prisma migration has been committed yet; the mock feed works without one, but persisted local DB work should create and run a migration first.
+- Git worktrees do not share ignored local files. If you run the app from a feature worktree, it needs its own `.env` and `prisma/dev.db`.
+- GitHub, Hacker News, arXiv, and company-blog HTML collectors are compile-safe stubs unless they are backed by RSS/Atom sources.

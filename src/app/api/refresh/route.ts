@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFeed, isCategory } from "../../../server/feedService";
 import { runIngestJob } from "../../../server/jobs/ingestJob";
-import type { Category, FeedResponse, RankedItem } from "../../../types";
+import type { Category, FeedDataSource, FeedResponse, RankedItem } from "../../../types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +25,13 @@ function buildFeedFromIngestedItems(
   return {
     items: filteredItems.slice(0, parseLimit(query.limit)),
     total: filteredItems.length,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    dataSource: resolveDataSource(filteredItems)
   };
+}
+
+function resolveDataSource(items: RankedItem[]): FeedDataSource {
+  return items.every((item) => item.sourceType === "mock") ? "mock" : "transient";
 }
 
 async function refreshFeed(request: NextRequest) {
@@ -42,7 +47,9 @@ async function refreshFeed(request: NextRequest) {
 
   const ingestResult = await runIngestJob({ persist: true });
   const feed =
-    ingestResult.stats.saved > 0 ? await getFeed(query) : buildFeedFromIngestedItems(ingestResult.rankedItems, query);
+    ingestResult.stats.saved > 0 || ingestResult.stats.usedFallback
+      ? await getFeed(query)
+      : buildFeedFromIngestedItems(ingestResult.rankedItems, query);
 
   return NextResponse.json(
     {

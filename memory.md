@@ -25,6 +25,8 @@ Agents must read this file before making changes. If an agent discovers a repeat
 - Do not treat social sources as final truth without a stronger source.
 - Do not rank by popularity alone; rank by engineering usefulness.
 - Do not create large cross-cutting changes in subagent branches.
+- Do not run the dev server from an old feature worktree while testing changes made in the main repo.
+- Do not assume worktrees share `.env` or `prisma/dev.db`; each worktree has its own local ignored files.
 
 ## Source Reliability Notes
 
@@ -47,6 +49,7 @@ Agents must read this file before making changes. If an agent discovers a repeat
 - Keep mock data stable so frontend, ranking, and backend can advance independently.
 - Record cross-boundary requests in `docs/integration-requests.md`.
 - Prefer adapters over direct imports across ownership boundaries.
+- Feed responses should expose `dataSource` so the frontend does not guess whether rows came from SQLite, mock fixtures, or unsaved refresh output.
 
 ## Subagent Coordination Lessons
 

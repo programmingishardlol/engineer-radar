@@ -14,6 +14,7 @@ export type ItemScoreInput = {
 
 export type RankedItemListOptions = {
   category?: Category;
+  includeMock?: boolean;
   minScore?: number;
   limit?: number;
 };
@@ -50,6 +51,7 @@ function scoreData(input: ItemScoreInput) {
 function rankedWhere(options: RankedItemListOptions = {}) {
   return {
     ...(options.category ? { category: options.category } : {}),
+    ...(options.includeMock ? {} : { sourceType: { not: "mock" } }),
     score: {
       is: {
         finalScore: {

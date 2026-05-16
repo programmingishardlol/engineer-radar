@@ -4,7 +4,7 @@ import type { FeedResponse } from "../src/types";
 
 describe("getFeed", () => {
   it("returns ranked feed items sorted by score", async () => {
-    const feed = await getFeed({ limit: 5, minScore: 0 });
+    const feed = await getFeed({ limit: 5, minScore: 0, mode: "mock" });
 
     expect(feed.total).toBeGreaterThan(0);
     expect(feed.items.length).toBeLessThanOrEqual(5);
@@ -15,16 +15,18 @@ describe("getFeed", () => {
   });
 
   it("filters by category", async () => {
-    const feed = await getFeed({ category: "developer_tools" });
+    const feed = await getFeed({ category: "developer_tools", mode: "mock" });
 
     expect(feed.items.length).toBeGreaterThan(0);
     expect(feed.items.every((item) => item.category === "developer_tools")).toBe(true);
   });
 
   it("returns FeedResponse-shaped data with ranked item contract fields", async () => {
-    const feed: FeedResponse = await getFeed({ limit: 1 });
+    const feed: FeedResponse = await getFeed({ limit: 1, mode: "mock" });
 
     expect(feed.total).toBeGreaterThanOrEqual(feed.items.length);
+    expect(feed.dataSource).toBe("mock");
+    expect(feed.fallbackReason).toBe("explicit_mock_mode");
     expect(Number.isNaN(Date.parse(feed.generatedAt))).toBe(false);
     expect(feed.items[0]).toMatchObject({
       id: expect.any(String),
@@ -49,9 +51,9 @@ describe("getFeed", () => {
   });
 
   it("filters by minimum score before applying the limit", async () => {
-    const fullFeed = await getFeed();
+    const fullFeed = await getFeed({ mode: "mock" });
     const threshold = fullFeed.items[0].score.finalScore;
-    const filteredFeed = await getFeed({ minScore: threshold, limit: 1 });
+    const filteredFeed = await getFeed({ minScore: threshold, limit: 1, mode: "mock" });
 
     expect(filteredFeed.items).toHaveLength(1);
     expect(filteredFeed.total).toBe(fullFeed.items.filter((item) => item.score.finalScore >= threshold).length);
@@ -59,9 +61,9 @@ describe("getFeed", () => {
   });
 
   it("clamps limits to the supported range", async () => {
-    const tinyLimitFeed = await getFeed({ limit: 0 });
-    const fractionalLimitFeed = await getFeed({ limit: 2.9 });
-    const largeLimitFeed = await getFeed({ limit: 500 });
+    const tinyLimitFeed = await getFeed({ limit: 0, mode: "mock" });
+    const fractionalLimitFeed = await getFeed({ limit: 2.9, mode: "mock" });
+    const largeLimitFeed = await getFeed({ limit: 500, mode: "mock" });
 
     expect(tinyLimitFeed.items).toHaveLength(Math.min(tinyLimitFeed.total, 20));
     expect(fractionalLimitFeed.items).toHaveLength(2);

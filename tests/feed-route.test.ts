@@ -43,7 +43,9 @@ const feedResponse: FeedResponse = {
     }
   ],
   total: 1,
-  generatedAt: "2026-04-27T12:01:00.000Z"
+  generatedAt: "2026-04-27T12:01:00.000Z",
+  dataSource: "mock",
+  fallbackReason: "explicit_mock_mode"
 };
 
 function makeRequest(query = ""): NextRequest {
@@ -65,7 +67,8 @@ describe("GET /api/feed route", () => {
     expect(getFeedMock).toHaveBeenCalledWith({
       category: "developer_tools",
       minScore: 3.2,
-      limit: 7
+      limit: 7,
+      mode: "auto"
     });
     expect(json).toEqual(feedResponse);
   });
@@ -78,7 +81,8 @@ describe("GET /api/feed route", () => {
     expect(getFeedMock).toHaveBeenCalledWith({
       category: undefined,
       minScore: undefined,
-      limit: 3
+      limit: 3,
+      mode: "auto"
     });
     expect(json).toEqual(feedResponse);
   });

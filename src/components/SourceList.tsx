@@ -1,13 +1,18 @@
+import type { FeedDataSource } from "../types";
+
 type SourceListProps = {
   sources: string[];
   generatedAt?: string;
   itemCount: number;
+  dataSource?: FeedDataSource;
 };
 
-export function SourceList({ sources, generatedAt, itemCount }: SourceListProps) {
+export function SourceList({ sources, generatedAt, itemCount, dataSource }: SourceListProps) {
   const generatedLabel = generatedAt
     ? new Date(generatedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
     : null;
+  const sourceLabel =
+    dataSource === "database" ? "Saved feed" : dataSource === "mock" ? "Mock demo" : "Live fetch";
 
   return (
     <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -20,7 +25,7 @@ export function SourceList({ sources, generatedAt, itemCount }: SourceListProps)
           </p>
         </div>
         <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-800">
-          Feed
+          {sourceLabel}
         </span>
       </div>
 

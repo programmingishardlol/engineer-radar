@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Engineer Radar",
-  description: "A mock-mode MVP dashboard for engineering updates."
+  description: "A database-first dashboard for engineering updates."
 };
 
 export default function RootLayout({

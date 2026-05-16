@@ -51,15 +51,19 @@ The MVP feed has four stable handoff stages. Each stage owns its own logic, but 
 - `items` is the ordered feed payload.
 - `total` is the count before `limit` truncation is removed from consideration by the server's chosen semantics.
 - `generatedAt` is the response assembly timestamp in ISO-8601 form.
+- `dataSource` tells clients whether the feed came from SQLite, mock fixtures, or unsaved refresh output.
+- `fallbackReason` is present when mock fixtures are returned.
 - Query filtering happens here, not in the frontend.
 
 ## Runtime Path
 
 `collectRssItems(defaultRssSources) -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> save to SQLite -> GET /api/feed -> Dashboard`
 
-If RSS/Atom collection returns no items, the runtime path falls back to:
+If RSS/Atom collection returns no items, the runtime path falls back through the feed service:
 
-`collectMockRawItems -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> optional save to SQLite -> GET /api/feed -> Dashboard`
+`GET /api/feed -> saved SQLite rows if present -> mock fixtures only if database is empty`
+
+Mock fallback items are not saved as live news.
 
 ## Future Persistent Flow
 
