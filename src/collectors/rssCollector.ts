@@ -7,6 +7,9 @@ type RssParserOptions = {
   sourceType?: SourceType;
   category?: Category;
   credibility?: number;
+  priority?: number;
+  includeKeywords?: string[];
+  excludeKeywords?: string[];
   maxItems?: number;
   now?: () => Date;
 };
@@ -18,6 +21,15 @@ type ParsedEntry = {
 };
 
 const entryPattern = /<item\b[\s\S]*?<\/item>|<entry\b[\s\S]*?<\/entry>/gi;
+
+const globalLowSignalRules = [
+  { id: "webinar", keywords: ["webinar", "online seminar"] },
+  { id: "customer-story", keywords: ["customer story", "customer stories", "case study"] },
+  { id: "generic-event", keywords: ["generic event", "conference", "summit", "meet us at", "join us at"] },
+  { id: "hiring-pr", keywords: ["we are hiring", "we're hiring", "now hiring", "career opportunity"] },
+  { id: "marketing-only", keywords: ["brand campaign", "award-winning", "market leader", "thought leadership"] },
+  { id: "sales-partner", keywords: ["partner program", "channel partner", "sales team", "sales teams", "sponsored"] }
+];
 
 function decodeXmlEntities(value: string): string {
   return value
@@ -111,6 +123,57 @@ function parseEntries(xml: string): ParsedEntry[] {
   }));
 }
 
+function normalizeKeyword(keyword: string): string {
+  return keyword.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function searchableEntryText(title: string, rawText?: string): string {
+  return `${title} ${rawText ?? ""}`.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function findKeywordMatch(text: string, keywords: string[] = []): string | undefined {
+  return keywords.map(normalizeKeyword).find((keyword) => keyword.length > 0 && text.includes(keyword));
+}
+
+function lowSignalReason(text: string): string | undefined {
+  for (const rule of globalLowSignalRules) {
+    const keyword = findKeywordMatch(text, rule.keywords);
+    if (keyword) {
+      return `${rule.id}:${keyword}`;
+    }
+  }
+
+  return undefined;
+}
+
+function qualityDecision(
+  title: string,
+  rawText: string | undefined,
+  options: Pick<RssParserOptions, "includeKeywords" | "excludeKeywords">
+): { included: true; reason: string } | { included: false; reason: string } {
+  const text = searchableEntryText(title, rawText);
+  const excludedBySource = findKeywordMatch(text, options.excludeKeywords);
+  if (excludedBySource) {
+    return { included: false, reason: `source-exclude:${excludedBySource}` };
+  }
+
+  const excludedByGlobalRule = lowSignalReason(text);
+  if (excludedByGlobalRule) {
+    return { included: false, reason: excludedByGlobalRule };
+  }
+
+  if (options.includeKeywords && options.includeKeywords.length > 0) {
+    const includedBySource = findKeywordMatch(text, options.includeKeywords);
+    if (!includedBySource) {
+      return { included: false, reason: "missing-include-keyword" };
+    }
+
+    return { included: true, reason: `source-include:${includedBySource}` };
+  }
+
+  return { included: true, reason: "no-source-include-keywords" };
+}
+
 export function parseRssXmlToRawItems(xml: string, options: RssParserOptions): RawItem[] {
   const now = options.now ?? (() => new Date());
   const maxItems = options.maxItems ?? 20;
@@ -125,6 +188,11 @@ export function parseRssXmlToRawItems(xml: string, options: RssParserOptions): R
 
     const publishedAt = readEntryDate(entryXml, now);
     const rawText = readEntryRawText(entryXml);
+    const quality = qualityDecision(title, rawText, options);
+    if (!quality.included) {
+      return [];
+    }
+
     const id = `rss-${stableHash(`${options.feedUrl}:${url}:${publishedAt}:${index}`)}`;
 
     return [
@@ -139,6 +207,9 @@ export function parseRssXmlToRawItems(xml: string, options: RssParserOptions): R
         metadata: {
           feedUrl: options.feedUrl,
           feedFormat: format,
+          qualityFilter: "included",
+          qualityFilterReason: quality.reason,
+          sourcePriority: options.priority ?? 50,
           ...(options.category ? { category: options.category } : {}),
           ...(options.credibility ? { sourceCredibility: options.credibility } : {})
         }
@@ -166,6 +237,9 @@ export const collectRssItems: Collector = async (context) => {
       sourceType: context.source.sourceType,
       category: context.source.category,
       credibility: context.source.credibility,
+      priority: context.source.priority,
+      includeKeywords: context.source.includeKeywords,
+      excludeKeywords: context.source.excludeKeywords,
       maxItems: 20,
       now: context.now
     });
