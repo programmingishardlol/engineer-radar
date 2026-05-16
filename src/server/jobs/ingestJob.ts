@@ -59,7 +59,7 @@ async function collectRssSourceItems(options: IngestJobOptions): Promise<RawItem
 async function buildIngestResult(rawItems: RawItem[], options: IngestJobOptions, usedFallback: boolean) {
   const canonicalItems = deduplicateCanonicalItems(normalizeRawItems(rawItems));
   const rankedItems = rankItems(canonicalItems);
-  const shouldPersist = options.persist === true && Boolean(process.env.DATABASE_URL);
+  const shouldPersist = options.persist === true;
   const persisted = shouldPersist
     ? {
         rawItems: await saveRawItems(rawItems),
