@@ -61,6 +61,8 @@ Engineering Radar uses a database-first feed with a mock fixture fallback and st
 - Backend orchestration composes collectors, pipeline, dedupe, and ranking modules.
 - Database persistence is downstream of collectors and ranking and must not redefine transport contracts.
 - Mock/demo status is data behavior, not a separate alternate schema.
+- Source registry admin state is persisted in SQLite and merged with the curated code registry at ingest time.
+- Disabling a source in SQLite must prevent refresh from fetching that source.
 
 ## Vertical Slice
 

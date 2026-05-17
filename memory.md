@@ -15,6 +15,7 @@ Agents must read this file before making changes. If an agent discovers a repeat
 - Keep real collectors as typed stubs until mock pipeline contracts are stable.
 - Shared contracts live in `src/types/`.
 - Frontend calls API routes and consumes API response contracts.
+- Persist source enabled/disabled state in SQLite while keeping curated source URLs and keyword filters in code.
 
 ## Known Mistakes To Avoid
 
@@ -42,6 +43,8 @@ Agents must read this file before making changes. If an agent discovers a repeat
 - Mock data must be clearly labeled as mock/demo.
 - Security and infrastructure items can be highly urgent even without broad popularity.
 - Startup items need technical defensibility signals, not invented funding or founder details.
+- Ranking should boost concrete technical details like patches, kernel behavior, APIs, benchmarks, latency, throughput, and debugging evidence.
+- Ranking should penalize broad roundups, customer stories, webinars, partner posts, and event marketing even when the source is credible.
 
 ## Integration Lessons
 
@@ -50,6 +53,7 @@ Agents must read this file before making changes. If an agent discovers a repeat
 - Record cross-boundary requests in `docs/integration-requests.md`.
 - Prefer adapters over direct imports across ownership boundaries.
 - Feed responses should expose `dataSource` so the frontend does not guess whether rows came from SQLite, mock fixtures, or unsaved refresh output.
+- Source registry sync should preserve persisted `enabled` values; otherwise refresh can accidentally re-enable noisy sources.
 
 ## Subagent Coordination Lessons
 

@@ -96,3 +96,51 @@ Non-2xx responses should return JSON in this shape:
 - Frontend should consume the HTTP contract, not server internals.
 - Tests should validate `GET /api/feed` against `FeedResponse`.
 - New feed fields must be added in `src/types/` before they are used by server or frontend code.
+
+## GET `/api/sources`
+
+Returns persisted source registry rows plus lightweight health stats derived from saved raw items.
+
+```ts
+type SourceAdminItem = SourceRegistryItem & {
+  stats: {
+    savedItemCount: number;
+    latestPublishedAt?: string;
+    lastSavedAt?: string;
+  };
+};
+```
+
+The route syncs the default RSS registry into SQLite before returning rows. Existing `enabled` values are preserved so disabled noisy sources stay disabled.
+
+## PATCH `/api/sources`
+
+Updates source enabled state.
+
+Request:
+
+```json
+{
+  "url": "https://example.com/feed.xml",
+  "enabled": false
+}
+```
+
+Response:
+
+```json
+{
+  "source": {}
+}
+```
+
+Invalid payloads return:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "Expected JSON body with string url and boolean enabled."
+  }
+}
+```

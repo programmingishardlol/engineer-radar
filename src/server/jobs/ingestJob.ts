@@ -6,6 +6,7 @@ import { normalizeRawItems } from "../../pipeline/normalize";
 import { deduplicateCanonicalItems } from "../../pipeline/deduplicate";
 import { rankItems } from "../../ranking/rankItems";
 import { saveCanonicalItems, saveRankedItemScores, saveRawItems } from "../../db/itemsRepo";
+import { getConfiguredRssSources } from "../sourceService";
 import type { RawItem, SourceRegistryItem } from "../../types";
 
 export type MockIngestJobOptions = {
@@ -40,8 +41,13 @@ function createDefaultFetch(): CollectorFetch {
   };
 }
 
-async function collectRssSourceItems(options: IngestJobOptions): Promise<RawItem[]> {
-  const sources = listEnabledRssSources(options.sources ?? defaultRssSources);
+type RssCollectionResult = {
+  rawItems: RawItem[];
+  sourceCount: number;
+};
+
+async function collectRssSourceItems(options: IngestJobOptions): Promise<RssCollectionResult> {
+  const sources = options.sources ? listEnabledRssSources(options.sources) : await getConfiguredRssSources();
   const rssFetch = options.fetch ?? createDefaultFetch();
   const results = await Promise.all(
     sources.map((source) =>
@@ -53,10 +59,13 @@ async function collectRssSourceItems(options: IngestJobOptions): Promise<RawItem
     )
   );
 
-  return results.flat();
+  return {
+    rawItems: results.flat(),
+    sourceCount: sources.length
+  };
 }
 
-async function buildIngestResult(rawItems: RawItem[], options: IngestJobOptions, usedFallback: boolean) {
+async function buildIngestResult(rawItems: RawItem[], options: IngestJobOptions, usedFallback: boolean, sourceCount?: number) {
   const canonicalItems = deduplicateCanonicalItems(normalizeRawItems(rawItems));
   const rankedItems = rankItems(canonicalItems);
   const shouldPersist = options.persist === true && !usedFallback;
@@ -77,17 +86,17 @@ async function buildIngestResult(rawItems: RawItem[], options: IngestJobOptions,
       fetched: rawItems.length,
       saved: persisted?.rankedItems.saved ?? 0,
       usedFallback,
-      sourceCount: listEnabledRssSources(options.sources ?? defaultRssSources).length
+      sourceCount: sourceCount ?? listEnabledRssSources(options.sources ?? defaultRssSources).length
     }
   };
 }
 
 export async function runIngestJob(options: IngestJobOptions = {}) {
-  const rssItems = await collectRssSourceItems(options);
-  const usedFallback = rssItems.length === 0;
-  const rawItems = usedFallback ? await collectMockRawItems() : rssItems;
+  const rssResult = await collectRssSourceItems(options);
+  const usedFallback = rssResult.rawItems.length === 0;
+  const rawItems = usedFallback ? await collectMockRawItems() : rssResult.rawItems;
 
-  return buildIngestResult(rawItems, options, usedFallback);
+  return buildIngestResult(rawItems, options, usedFallback, rssResult.sourceCount);
 }
 
 export async function runMockIngestJob(options: MockIngestJobOptions = {}) {

@@ -86,6 +86,26 @@ Successful responses match `FeedResponse` from `src/types/`. Non-2xx route failu
 }
 ```
 
+`GET /api/sources`
+
+Returns source registry rows with lightweight saved-item stats:
+
+```bash
+curl "http://localhost:3000/api/sources"
+```
+
+`PATCH /api/sources`
+
+Enable or disable a source by URL:
+
+```bash
+curl -X PATCH "http://localhost:3000/api/sources" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://blog.cloudflare.com/rss/","enabled":false}'
+```
+
+Refresh uses the persisted enabled state, so disabled sources are skipped.
+
 ## Parallel Subagent Workflow
 
 Read these first:

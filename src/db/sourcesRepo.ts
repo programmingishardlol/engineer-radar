@@ -1,4 +1,4 @@
-import type { SourceRegistryItem } from "../types";
+import type { SourceRegistryItem, SourceStats } from "../types";
 import { prisma } from "./client";
 import { mapDbSource } from "./mappers";
 
@@ -6,6 +6,17 @@ export type SourceInput = Omit<SourceRegistryItem, "id" | "enabled"> & {
   id?: string;
   enabled?: boolean;
 };
+
+function sourceData(input: SourceRegistryItem) {
+  return {
+    name: input.name,
+    url: input.url,
+    category: input.category,
+    sourceType: input.sourceType,
+    fetchMethod: input.fetchMethod,
+    credibility: input.credibility
+  };
+}
 
 export async function listSources(): Promise<SourceRegistryItem[]> {
   const sources = await prisma.source.findMany({
@@ -39,11 +50,33 @@ export async function upsertSource(input: SourceInput): Promise<SourceRegistryIt
       sourceType: input.sourceType,
       fetchMethod: input.fetchMethod,
       credibility: input.credibility,
-      enabled: input.enabled ?? true
+      ...(typeof input.enabled === "boolean" ? { enabled: input.enabled } : {})
     }
   });
 
   return mapDbSource(source);
+}
+
+export async function syncSources(inputs: SourceRegistryItem[]): Promise<{ synced: number }> {
+  if (inputs.length === 0) {
+    return { synced: 0 };
+  }
+
+  await prisma.$transaction(
+    inputs.map((input) =>
+      prisma.source.upsert({
+        where: { url: input.url },
+        create: {
+          id: input.id,
+          ...sourceData(input),
+          enabled: input.enabled
+        },
+        update: sourceData(input)
+      })
+    )
+  );
+
+  return { synced: inputs.length };
 }
 
 export async function setSourceEnabled(url: string, enabled: boolean): Promise<SourceRegistryItem> {
@@ -53,4 +86,24 @@ export async function setSourceEnabled(url: string, enabled: boolean): Promise<S
   });
 
   return mapDbSource(source);
+}
+
+export async function listSourceStats(): Promise<SourceStats[]> {
+  const stats = await prisma.rawItem.groupBy({
+    by: ["sourceName"],
+    _count: {
+      _all: true
+    },
+    _max: {
+      publishedAt: true,
+      createdAt: true
+    }
+  });
+
+  return stats.map((stat) => ({
+    sourceName: stat.sourceName,
+    savedItemCount: stat._count._all,
+    latestPublishedAt: stat._max.publishedAt?.toISOString(),
+    lastSavedAt: stat._max.createdAt?.toISOString()
+  }));
 }

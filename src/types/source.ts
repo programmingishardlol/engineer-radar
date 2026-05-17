@@ -29,3 +29,14 @@ export type SourceRegistryItem = {
   includeKeywords?: string[];
   excludeKeywords?: string[];
 };
+
+export type SourceStats = {
+  sourceName: string;
+  savedItemCount: number;
+  latestPublishedAt?: string;
+  lastSavedAt?: string;
+};
+
+export type SourceAdminItem = SourceRegistryItem & {
+  stats: Omit<SourceStats, "sourceName">;
+};

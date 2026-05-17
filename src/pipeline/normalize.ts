@@ -180,10 +180,6 @@ function scoreRule(text: string, rule: CategoryRule): number {
 }
 
 function detectCategory(item: RawItem): Category {
-  if (isCategory(item.metadata?.category)) {
-    return item.metadata.category;
-  }
-
   const text = searchableText(item);
   const [bestRule] = categoryRules
     .map((rule) => ({
@@ -191,6 +187,14 @@ function detectCategory(item: RawItem): Category {
       score: scoreRule(text, rule)
     }))
     .sort((first, second) => second.score - first.score);
+
+  if (isCategory(item.metadata?.category)) {
+    if (bestRule && bestRule.score >= 2) {
+      return bestRule.category;
+    }
+
+    return item.metadata.category;
+  }
 
   if (bestRule && bestRule.score > 0) {
     return bestRule.category;

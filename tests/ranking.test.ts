@@ -68,6 +68,34 @@ describe("ranking", () => {
     expect(hypeScore.finalScore).toBeLessThan(plainScore.finalScore);
   });
 
+  it("ranks technical engineering detail above broad marketing announcements", () => {
+    const technicalItem: CanonicalItem = {
+      ...baseCanonicalItem,
+      id: "technical-detail",
+      sourceType: "company_blog",
+      title: "Linux kernel QUIC bug fix improves congestion control latency",
+      summaryCandidateText:
+        "Engineers debugged a Linux kernel interaction with QUIC congestion control, measured latency regressions, and shipped a mitigation with upstream patches.",
+      category: "cloud_infrastructure"
+    };
+    const marketingItem: CanonicalItem = {
+      ...baseCanonicalItem,
+      id: "marketing-roundup",
+      sourceType: "company_blog",
+      title: "Everything we launched during customer week",
+      summaryCandidateText:
+        "A broad roundup of customer stories, partner announcements, webinars, and product updates from a company event.",
+      category: "cloud_infrastructure"
+    };
+
+    const technicalScore = scoreCanonicalItem(technicalItem);
+    const marketingScore = scoreCanonicalItem(marketingItem);
+
+    expect(technicalScore.finalScore).toBeGreaterThan(marketingScore.finalScore);
+    expect(technicalScore.engineeringImpact).toBeGreaterThan(marketingScore.engineeringImpact);
+    expect(marketingScore.hypeRisk).toBeGreaterThan(technicalScore.hypeRisk);
+  });
+
   it("uses publish date as the tie breaker when final scores match", () => {
     const older: CanonicalItem = {
       ...baseCanonicalItem,

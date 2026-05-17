@@ -57,13 +57,22 @@ The MVP feed has four stable handoff stages. Each stage owns its own logic, but 
 
 ## Runtime Path
 
-`collectRssItems(defaultRssSources) -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> save to SQLite -> GET /api/feed -> Dashboard`
+`sync default sources -> merge persisted enabled state -> collectRssItems(enabledSources) -> normalizeRawItems -> deduplicateCanonicalItems -> rankItems -> save to SQLite -> GET /api/feed -> Dashboard`
 
 If RSS/Atom collection returns no items, the runtime path falls back through the feed service:
 
 `GET /api/feed -> saved SQLite rows if present -> mock fixtures only if database is empty`
 
 Mock fallback items are not saved as live news.
+
+## Source Registry Flow
+
+`defaultRssSources -> syncSources -> Source table -> getConfiguredRssSources -> refresh`
+
+- The code registry remains the source of curated feed URLs, priorities, and keyword filters.
+- SQLite owns operator/admin state such as `enabled`.
+- `/api/sources` exposes source rows with saved-item counts and latest saved timestamps.
+- `PATCH /api/sources` can disable noisy sources without editing code.
 
 ## Future Persistent Flow
 
